@@ -19,6 +19,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.ScrollPaneConstants;
 
 public class Server extends JFrame {
 	private ServerSocket server;
@@ -189,6 +190,7 @@ public class Server extends JFrame {
 		this.textArea.setEditable(false);
 		this.textArea.setPreferredSize(new Dimension(500,550));
 		JScrollPane scrollPane = new JScrollPane(this.textArea);
+		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 	    this.add(scrollPane);
 	    
 	    // Create Server Socket

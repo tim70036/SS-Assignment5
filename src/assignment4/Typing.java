@@ -95,6 +95,7 @@ public class Typing extends JPanel implements Runnable{
 		
 		field = new JTextField(20);
 		field.setBounds(0, 535, 300, 30);
+		field.setEditable(false);
 		field.addActionListener( new ActionListener(){
 			// When User input , send to server
 		    public void actionPerformed(ActionEvent e) {
@@ -106,14 +107,17 @@ public class Typing extends JPanel implements Runnable{
 		        // Send to server
 		        sendMessage("User input");
 		        if(userInput2 == null)	sendMessage("No word");
-		        else	sendMessage(userInput2);
+		        else{
+		        	// If user input valid , wait for other's
+		        	sendMessage(userInput2);
+		        	field.setEditable(false);
+		        	// Show waiting label
+			        drawMode = 0;
+		        }
 		        
 		        // Reset TextField
 		        field.setText("");
 		        scanner.close();
-		        
-		        // Show waiting label
-		        drawMode = 0;
 		    }
 		});
 		// Add Component
@@ -255,6 +259,9 @@ public class Typing extends JPanel implements Runnable{
                 	setServerSayStart(true);
                 	Thread paintingThread = new Thread(gs);
                 	paintingThread.start();
+                	
+                	// Let User can input
+                	field.setEditable(true);
                 }
                 
                 // Start drawing picture
@@ -297,6 +304,9 @@ public class Typing extends JPanel implements Runnable{
 								e.printStackTrace();
 							}
 							drawMode = 1;
+							
+							// User can input again
+							field.setEditable(true);
 						}
 						// Right answer
 						else if(act.equals("Right answer"))
@@ -304,6 +314,9 @@ public class Typing extends JPanel implements Runnable{
 							correct();
 							// Show picture
 							drawMode = 1;
+							
+							// User can input again
+							field.setEditable(true);
 						}
 					} catch (IOException e1) {
 						// TODO Auto-generated catch block
