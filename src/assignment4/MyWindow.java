@@ -41,30 +41,15 @@ public class MyWindow extends JFrame {
 		typing.setBounds(0, 0, 300, 600);
 
 
-		while(true)
-		{
-			// Init, clear the data played before
+
 			stage.init();
 			typing.init();
 			// Control of Game thread
 			Thread typingThread = new Thread(typing);
-			Thread paintingThread = new Thread(stage);
 			typingThread.start();
-			paintingThread.start();
+			
 
-			// Wait game to stop
-			try {
-				typingThread.join();
-				paintingThread.join();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
 
-			// Replay?
-			int replay = JOptionPane.showConfirmDialog(this,"Game Over ! Do you want to replay ? ","Game Over",
-	                JOptionPane.YES_NO_OPTION,JOptionPane.INFORMATION_MESSAGE);
-			if(replay == 1)	break;
-		}		
+	
 	}
 }

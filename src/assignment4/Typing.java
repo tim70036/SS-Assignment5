@@ -2,6 +2,7 @@ package assignment4;
 
 import java.awt.Color;
 import java.awt.Event;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
@@ -23,6 +24,7 @@ import java.util.Random;
 import java.util.Scanner;
 
 import javax.imageio.ImageIO;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
@@ -34,17 +36,15 @@ public class Typing extends JPanel implements Runnable{
 	private Color color;
 	private GameStage gs;
 	private boolean stop;
+	private int drawMode;// 0: waiting, 1: draw word picture , 2: wrong answer
 	
 	// Component
 	private JTextField field;
-	private String userInput1;
-	private String userInput2;
+	private JLabel waiting;
+	private JLabel wrong;
 	
 	// Picture and position
-	private Image picture1;
 	private Image picture2;
-	private int picture1X;
-	private int picture1Y;
 	private int picture2X;
 	private int picture2Y;
 	
@@ -61,9 +61,7 @@ public class Typing extends JPanel implements Runnable{
 	public void setGameStage(GameStage g){gs = g;}
 	public void setStop(boolean b){stop = b;}
 	public static void  setServerSayStart(boolean b){serverSayStart = b;}
-	
-	public void setPicture1X(int x){picture1X = x;}
-	public void setPicture1Y(int y){picture1Y = y;}
+
 	public void setPicture2X(int x){picture2X = x;}
 	public void setPicture2Y(int y){picture2Y = y;}
 	
@@ -74,8 +72,6 @@ public class Typing extends JPanel implements Runnable{
 	public boolean getStop(){return stop;}
 	public static boolean getServerSayStart(){return serverSayStart;}
 	
-	public int getPicture1X(){	return picture1X;}
-	public int getPicture1Y(){	return picture1Y;}
 	public int getPicture2X(){	return picture2X;}
 	public int getPicture2Y(){	return picture2Y;}
 	
@@ -89,33 +85,42 @@ public class Typing extends JPanel implements Runnable{
 		setGameStage(g);
 		
 		// Initialize component
+		waiting = new JLabel("Waiting");
+		waiting.setFont(new Font(waiting.getName(), Font.PLAIN, 25));
+		waiting.setBounds(5, 200, 200, 50);
+		
+		wrong = new JLabel("Wrong answer, please input again!");
+		wrong.setFont(new Font(waiting.getName(), Font.PLAIN, 15));
+		wrong.setBounds(5,300,200,50);
+		
 		field = new JTextField(20);
 		field.setBounds(0, 535, 300, 30);
 		field.addActionListener( new ActionListener(){
 			// When User input , send to server
 		    public void actionPerformed(ActionEvent e) {
 		        // Get userInput by Scanner through field
+		    	String userInput2 = null;
 		        Scanner scanner = new Scanner(field.getText());
-		        if(scanner.hasNext())	userInput1 = scanner.next();
 		        if(scanner.hasNext())	userInput2 = scanner.next();
 		        
 		        // Send to server
 		        sendMessage("User input");
-		        if(userInput1 == null)	sendMessage("No word");
-		        else	sendMessage(userInput1);
 		        if(userInput2 == null)	sendMessage("No word");
 		        else	sendMessage(userInput2);
 		        
 		        // Reset TextField
 		        field.setText("");
 		        scanner.close();
+		        
+		        // Show waiting label
+		        drawMode = 0;
 		    }
 		});
 		// Add Component
 		this.add(field);
-		
+		this.add(waiting);
+		this.add(wrong);
 
-		
 		// Socket
         try {
 			client = new Socket("127.0.0.1",7777);
@@ -142,29 +147,10 @@ public class Typing extends JPanel implements Runnable{
 	// init the game
 	public void init()
 	{
-		setStop(false);
-		
-//		// Read first Image for picture1 and picture2
-//		changePicture1();
-//		changePicture2();
-		
+		setStop(false);		
 		repaint();
 	}
 	
-	// Change picture1 ,Reset position
-	public void changePicture1(String f1)
-	{
-		// Read Image
-		try {
-			picture1 = ImageIO.read(new File("img/known/" + f1));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		//Set position
-		setPicture1Y(0);
-		setPicture1X(5);
-	}
 	// Change picture2, Reset position
 	public void changePicture2(String f2)
 	{
@@ -177,7 +163,7 @@ public class Typing extends JPanel implements Runnable{
 		}
 		// Set position
 		setPicture2Y(0);
-		setPicture2X(15 + picture1.getWidth(this));// Avoid two pictures cover each other
+		setPicture2X(15);// Avoid two pictures cover each other
 	}
 	
 	// Animation for backGround color
@@ -224,8 +210,26 @@ public class Typing extends JPanel implements Runnable{
 	public void paintComponent(Graphics g)
 	{
 		this.setBackground(getColor());
-		g.drawImage(picture1, picture1X, picture1Y, this);
-		g.drawImage(picture2, picture2X, picture2Y, this);
+		// Show waiting
+		if(drawMode == 0)	
+		{
+			waiting.setVisible(true);
+			wrong.setVisible(false);
+		}
+		// Show word picture
+		else if(drawMode == 1)
+		{
+			g.drawImage(picture2, picture2X, picture2Y, this);
+			waiting.setVisible(false);
+			wrong.setVisible(false);
+		}
+		// Show wrong answer
+		else if(drawMode == 2)
+		{
+			wrong.setVisible(true);
+			waiting.setVisible(false);
+		}
+		field.setBounds(0, 535, 300, 30);
 	}
 	
 	// Send message to server
@@ -246,7 +250,15 @@ public class Typing extends JPanel implements Runnable{
 
                 // Server says start the game
                 if(message.equals("Rock and Roll"))
-                    setServerSayStart(true);
+                {
+                	// Start Typing and GameStage
+                	setServerSayStart(true);
+                	Thread paintingThread = new Thread(gs);
+                	paintingThread.start();
+                }
+                
+                // Start drawing picture
+                drawMode = 1;
                 
             } catch (IOException e) {
                 // TODO Auto-generated catch block
@@ -259,28 +271,39 @@ public class Typing extends JPanel implements Runnable{
 			public void run() {
 				while(true){
 					// Read Instruction from server
-					String act, f1,f2;
+					String act,f2;
 					try {
 						act = reader.readLine();
 						// Change picture
 						if(act.equals("changePicture"))
 						{
-							f1 = reader.readLine();
 							f2 = reader.readLine();
-							System.out.println(f1);
 							System.out.println(f2);
-							changePicture1(f1);
 							changePicture2(f2);
+							
+							// Show picture
+							drawMode = 1;
 						}
 						// Wrong answer
 						else if(act.equals("Wrong answer"))
 						{
 							changeBackground(false);
+							// Show wrong for a while and show picture
+							drawMode = 2;
+							try {
+								Thread.sleep(3000);
+							} catch (InterruptedException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+							drawMode = 1;
 						}
 						// Right answer
 						else if(act.equals("Right answer"))
 						{
 							correct();
+							// Show picture
+							drawMode = 1;
 						}
 					} catch (IOException e1) {
 						// TODO Auto-generated catch block
@@ -296,15 +319,8 @@ public class Typing extends JPanel implements Runnable{
 		{
 			
 			// Animation for word
-			setPicture1Y(getPicture1Y()+1);
 			setPicture2Y(getPicture2Y()+1);
-
-			// Check Whether reach the bottom, if so , change picture and reset Y
-//			if(getPicture1Y() >= 500)
-//				changePicture1();
-//			if(getPicture2Y() >= 500)
-//				changePicture2();
-
+			if(getPicture2Y() >= 500)	setPicture2Y(0);	
 
 			field.setBounds(0, 535, 300, 30);
 			repaint();
@@ -316,7 +332,6 @@ public class Typing extends JPanel implements Runnable{
 			try {
 				Thread.sleep(30);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}		

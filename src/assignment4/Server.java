@@ -27,17 +27,14 @@ public class Server extends JFrame {
 	private ArrayList<ConnectionThread>	connectionPool = new ArrayList<ConnectionThread>();
 	
 	// Data structure for picture
-	private ArrayList<Word> knownWord;
-	private ArrayList<Integer>	usedIndex1;
-	private int knownWordIndex;
 	private ArrayList<String>	unknownWordFile;
 	private ArrayList<Integer>	usedIndex2;
 	private int unknownWordFileIndex;
 	private Random r;
 	
 	// Output data structure
-	private String userInput1;
 	private String userInput2;
+	private ArrayList<String>	answer = new ArrayList<String>();
 	private ArrayList<Word> toOutput;
 	// Continue to create socket to accept each client
 	public void runServer()
@@ -107,21 +104,41 @@ public class Server extends JFrame {
 			while(true)
 			{
 				try {
-					// Read intruction
+					// Read instruction
 					clientMessage = reader.readLine();
-					addText(clientMessage);
+					addText(clientMessage + ": ");
 					
 					// User input 
 					if(clientMessage.equals("User input"))
 					{
-						userInput1 = reader.readLine();
 						userInput2 = reader.readLine();
-						
-						// Check whether UserInput match known word
-				        if(knownWord.get(knownWordIndex).getWord().equals(userInput1) && (!userInput2.equals("No word")))
-				        	correct(true);
-				        else
-				        	correct(false);
+						addText(userInput2);
+						// Check whether all UserInput match
+				        if(!userInput2.equals("No word"))// user must input
+				        {
+				        	answer.add(userInput2);// Add to answer pool
+				        	if(answer.size() >= connectionPool.size())// All user has inputed, Check answer
+				        	{
+				        		boolean same = true;
+				        		String s = answer.get(0);
+				        		for(String i : answer)
+				        		{
+				        			if(!s.equals(i))
+				        			{
+				        				same = false;
+				        				break;
+				        			}
+				        		}
+				        		// If all same , than correct
+				        		if(same)
+				        			correct(true);
+				        		else
+				        			correct(false);
+				        		// Clear answer pool
+				        		answer.clear();
+				        	}
+				        }
+				        
 					}
 					
 				} catch (IOException e) {
@@ -147,10 +164,11 @@ public class Server extends JFrame {
 	// Tell all client to start game and send first image filename
 	public void clientStart()
 	{
+		int cnt = 0;
 		for(ConnectionThread i : connectionPool)
 		{
 			i.sendMessage("Rock and Roll");
-			addText("send start signal to Player" + i);
+			addText("send start signal to Player" + cnt++);
 		}
 		changePicture();
 	}
@@ -185,22 +203,12 @@ public class Server extends JFrame {
 		
 		// Deal with data for word
 		r = new Random();
-		knownWord = new ArrayList<Word>();
-		usedIndex1 = new ArrayList<Integer>();
 		unknownWordFile = new ArrayList<String>();
 		usedIndex2 = new ArrayList<Integer>();
 		toOutput =  new ArrayList<Word>();
 		try {
-			// Read the known word into ArrayList
-			Scanner scanner = new Scanner(new File("known_words.txt"));
-			while(scanner.hasNext())
-			{
-				Word tmp = new Word(scanner.next(),scanner.next());
-				knownWord.add(tmp);
-			}
-			
 			// Read the unknown word's file name into ArrayList
-			scanner = new Scanner(new File("unknown_words.txt"));
+			Scanner scanner = new Scanner(new File("unknown_words.txt"));
 			while(scanner.hasNext())
 				unknownWordFile.add(scanner.next());
 			scanner.close();
@@ -213,8 +221,6 @@ public class Server extends JFrame {
 	public void changePicture()
 	{
 		// Find a non use picture
-		while(usedIndex1.contains(knownWordIndex))
-			knownWordIndex = r.nextInt(knownWord.size());
 		while(usedIndex2.contains(unknownWordFileIndex))
 			unknownWordFileIndex = r.nextInt(unknownWordFile.size());
 		
@@ -222,7 +228,6 @@ public class Server extends JFrame {
 		for(ConnectionThread i : connectionPool)
 		{
 			i.sendMessage("changePicture");
-			i.sendMessage(knownWord.get(knownWordIndex).getFile());
 			i.sendMessage(unknownWordFile.get(unknownWordFileIndex));
 		}
 			
@@ -233,11 +238,9 @@ public class Server extends JFrame {
 		if(b)
 		{
 			// Add to used
-			usedIndex1.add(new Integer(knownWordIndex));
 			usedIndex2.add(new Integer(unknownWordFileIndex));
 			
 			// Add to toOutput
-			toOutput.add(knownWord.get(knownWordIndex));
 			toOutput.add(new Word(unknownWordFile.get(unknownWordFileIndex) ,  userInput2));
 			
 			// Send to all

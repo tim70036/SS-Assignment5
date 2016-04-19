@@ -18,6 +18,7 @@ public class GameStage extends JPanel implements Runnable {
 	private int recordScore;
 	private int winScore;
 	private boolean stop;
+
 	private int width;
 	private int height;
 	private Color color;
@@ -37,6 +38,7 @@ public class GameStage extends JPanel implements Runnable {
 	public void setHeight(int h){height = h; }
 	public void setColor(Color c){color = c;}
 	public void setStop(boolean b){stop = b;}
+	
 	
 	public int	getCurrentScore(){	return currentScore;}
 	public int 	getWinScore(){	return winScore;}
@@ -108,7 +110,7 @@ public class GameStage extends JPanel implements Runnable {
 	}
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
+		// Start game
 		while(!stop)
 		{
 			// Animation of Duck
