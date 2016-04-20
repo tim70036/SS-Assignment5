@@ -147,18 +147,6 @@ public class Server extends JFrame {
 					e.printStackTrace();
 				}
 			}
-			
-//			// GameOver output the file
-//			try {
-//				PrintWriter w = new PrintWriter("output.txt");
-//				for(Word cur : toOutput)
-//					w.println(cur.getFile() + " " + cur.getWord());
-//				w.close();
-//			} catch (FileNotFoundException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
-//			
 		}		
 	}
 	
@@ -190,7 +178,9 @@ public class Server extends JFrame {
 		this.textArea.setEditable(false);
 		this.textArea.setPreferredSize(new Dimension(500,550));
 		JScrollPane scrollPane = new JScrollPane(this.textArea);
+		scrollPane.setPreferredSize(new Dimension(500,550));
 		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 	    this.add(scrollPane);
 	    
 	    // Create Server Socket

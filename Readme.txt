@@ -1,69 +1,75 @@
-Main:
-    第一部分Human OCR的程式進入點，創建MyWindow物件。
+103062121   劉亮廷     assignment5
 
-
-MyWindow:
-    繼承JFrame，為遊戲的主體，其中有GameStage, Typing兩個panel，並在一個無窮迴圈中，
-    不斷的初始化GameStage, Typing，並建立兩個Thread去執行他們兩個，直到這兩個Thread
-    結束後，會跳出訊息框詢問是否重玩，如果不要重玩的話會跳出迴圈。
-
-
-GameStage:
-    為遊戲右半邊的畫面，主要工作為顯示動畫及記錄分數，在建構式讀入各個物件(Duck,Ball....)
-    的Image，並建立JLabel顯示分數，init()初始化Attribute，paintComponent()
-    依據各個物件的x,y資料畫出圖形，addScore()增加分數並更新JLabel。
-
-    最重要的run()是遊戲執行的過程，由一個while迴圈不斷檢查stop是否為true，true的話代表遊
-    戲結束了就跳出迴圈。迴圈中，第一個是讓Duck上下漂浮而依據Duck的方向加減Duck的y座標。
-    第二個是當分數有變動時，依據得分決定要將BG,Ball往後移或Duck往前移，並開一個Thread來執
-    行這個動畫，最後則是檢查是否贏了(21分)，贏了就將stop設成true，下一次迴圈就不會跑了。
-
+    我使用上一次作業的code，其中更動的部份有Typing以及新增一個Server class。
 
 Typing:
-    為遊戲左半邊玩家輸入的畫面，主要工作為顯示動畫及讀取玩家輸入並判斷。建構式讀入known,
-    unknown word的檔案，將known的資料存在一個ArrayList<Word>，unknown存在ArrayList
-    <String>，並建立JTextField，為他建立一個ActionListener，當使用者輸入input時，會檢查
-    是否正確(第一個known word字是否正確以及第二個字不能沒有輸入)，正確就執行correct()，其
-    他則執行changeBackground()顯示錯誤的動畫。
-
-    init()初始化各個Attribute，清空usedIndex(ArrayList<Integer>)將每個字標示為未答對。
-
-    changePicture1,2()隨機找到一個未答對的圖片，更換圖片，重新設定picture1,2的x,y座標。
-
-    changeBackground()根據傳入的參數，開啟一個Thread去不斷更改color以顯示答對或答錯動畫。
-
-    correct()答對時的動作，執行changePicture1,2(),changeBackground()，並將答對的圖片
-    設定為已答對，之後不會重複出現。以及執行GameStage的addScore()讓分數增加。最後則是將
-    使用者的答案加入toOutput(ArrayList<Word>)，以記錄玩家的答案。
-
-    paintComponent()畫出picture1,2以及依據color設定背景顏色。
-
-    最重要的run()，如同GameStage由檢查stop的while迴圈組成，迴圈中，將picture1,2的y座標
-    不斷+1讓他們往下跑，並檢查是否跑到底部了，若跑到底部則執行changePicture1,2()換圖片，
-    迴圈中最後檢查GameStage的stop是否為true，若是的話代表右半邊已經判斷贏了，則將自己的stop
-    也設成true，下一次迴圈就會跳出。跳出迴圈之後，PrintWriter將使用者的答案toOutput輸出到
-    output.txt。
 
 
-Ball:
-    存放球的x,y座標以及球的Image，建構式讀入Image。
+    增加了一些需要的 Atrribute，在run()裡面，一開始會有一個迴圈等待server說開始，
+    在此迴圈中會一直read server傳來的訊息，當訊息確定是開始遊戲，會建立執行GameStage 的
+    Thread，設定TextField是可輸入的並跳出迴圈。之後會再建立一個Thread來執行一個迴圈不斷的
+    接收來自server的訊息。最後是進入遊戲的迴圈，不斷的更改圖片的y座標，並檢查遊戲是否結束。
 
-BG:
-    存放背景的x,y座標以及背景的Image，建構式讀入Image。
 
-Duck:
-    存放鴨子的x,y座標,上下漂浮的方向,上下漂浮的中心點以及Image，建構式讀入Image。
+    而TextField的ActionListener也做了一些更動，現在當使用者輸入答案時會將訊息傳至Server，
+    並將TextField設為不可輸入。
 
-Word:
-    如同Pair，存放檔名及對應的字。
 
-Reassembler:
-    第二部分作業的程式，依據cmd輸入的argument去讀取資料，並使用Scanner去scan，每一行有幾行
-    幾列的資料，以及對應的字，將字依據行列放在String[20][20] word中。
-    scan完檔案之後，用for迴圈掃描word的1~15列及行，有字就印出字，若為null就印出"---"。
+    最後為了顯示等待的訊息,錯誤答案的訊息，我使用JLabel以及一個drawMode的整數來操作，當
+    drawMode == 0 會顯示waiting的JLabel(等待其他玩家連線或使用者輸入答案等待server回應
+    時)，當drawMode == 1會顯示字的圖片(遊戲進行中)，當drawMode == 2會顯示wrong的JLabel
+    (server回傳的訊息表示答案錯誤)，並在paintComponent()中依據drawMode來繪圖。
+
+
+    而接收server訊息的迴圈中，會先read一個字串，根據這個字串才能知道server要client做什麼
+    動作，若這個字串是"changePicture"代表，答案正確要換下一張圖片了，這時候會再讀一個
+    字串，這個字串就會是圖案的檔名，並將drawMode設為1。
+
+
+    若server傳來的訊息是"Wrong answer"，代表剛剛輸入的答案有錯，這時會執行答錯的動畫並將
+    drawMode設為2以顯示wrong的label，並維持一段時間後(sleep)再將drawMode改回1，並將
+    TextField改為可以輸入。
+
+
+    若server傳來的訊息是"Right answer"，代表答案正確，執行correct()更改分數,並執行答對
+    動畫，將TextField改為可以輸入。
+
+
+Server:
+
+
+    我做的server可以超過兩個人連線，而檢查答案也會檢查全部人的答案。
+    Server本身繼承JFrame，其中有textArea，會顯示server目前的狀態，並在上面使用了scrollPane。
+
+
+    runServer()中，Socket會在迴圈中不斷的接受連線，並將連線後建立的ConnectionThread放入
+    connectionPool裡面。當connectionPool的size >= 2時，代表遊戲可以開始了，此時會廣播開
+    始遊戲的訊息給所有client。若之後有其他人加入，也一樣會廣播給所有人。
+
+
+    ConnectionThread是一個class extends Thread，裡面有連接client的socket,PrintWriter
+    ,BufferedReader。在run()之中會不斷的接收client的訊息，當client傳入答案時會將之放入answer
+    中(ArrayList)，當answer的數量跟connectionPool的數量一樣多時，代表著所有連線了人都輸入
+    了答案，這時就會檢查answer中的字串是不是都一樣。如果是的話就是答對執行correct(true)否則
+    執行correct(false)。
+
+
+    correct()，會依據傳入的參數，若是true代表答案正確，將這個word設為已使用過，並執行
+    changePicture()，最後廣播答對的訊息給所有client。如果是false代表答案錯誤，廣播錯誤訊
+    息給所有client。
+
+
+    changePicture()，找到一個未使用過的字的檔名，通知所有client要更改圖片，廣播檔名給所有
+    的client。
+
 
 遇到的困難：
-    作業說明剛開始看不太懂，後來就決定只採用pdf上部分的作法。
-    GUI元件不夠熟悉，常常要上網搜尋才知道要怎麼做。
-    Layout使用方式也不太清楚，嘗試了很多次，後來決定不用layout manager才把元件放到對的位置。
-    作業第二部分看不懂要我們做什麼，還好問了同學才知道。
+
+    原本以為client要在開另外一個class來處理Socket，但後來發現這樣會太麻煩，所以就直接寫在
+    Typing裡。
+
+    一開始我就另外開一個Thread來接收server訊息，後來發現這樣會造成跟Typing的run()
+    不同步，可能已經收到遊戲開始的訊息，但Typing的Constructor都還沒跑完，所以後來改成把接收
+    server訊息的Thread寫在run裡面，如此就可以確定Typing的東西都建立完成。
+
+    scrollPane的捲軸我原本無法顯示出來，後來使用setPreferredSize以後才出現。
