@@ -47,9 +47,5 @@ public class MyWindow extends JFrame {
 			// Control of Game thread
 			Thread typingThread = new Thread(typing);
 			typingThread.start();
-			
-
-
-	
 	}
 }

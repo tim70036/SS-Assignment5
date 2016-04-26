@@ -99,6 +99,7 @@ public class GameStage extends JPanel implements Runnable {
 	// Drawing method
 	public void paintComponent(Graphics g)
 	{
+		super.paintComponent(g);
 		this.setBackground(getColor());
 		g.drawImage(bg.getImage(), bg.getBgX(), bg.getBgY(),this);
 		g.drawImage(duck.getImage(), duck.getDuckCurrentX(), duck.getDuckCurrentY(), this);

@@ -213,6 +213,7 @@ public class Typing extends JPanel implements Runnable{
 	// Drawing method
 	public void paintComponent(Graphics g)
 	{
+		super.paintComponent(g);
 		this.setBackground(getColor());
 		// Show waiting
 		if(drawMode == 0)	
